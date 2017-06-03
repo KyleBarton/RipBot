@@ -910,16 +910,15 @@ class GroupMeBot(object):
         return_str = 'Exercises:'
         return_str += '\nDo ' + sets + ' of:'
         for exercise in exercises:
-            return_str += '\r\nExercise:'
-            return_str += '\r\r\n ' + exercise['name']
+            return_str += '\r\n Exercise:'
+            return_str += '\r\n  ' + exercise['name']
             if 'reps' in exercise:
-                return_str += '\r\r\nReps: ' + exercise['reps']
-                return_str += '\r\r\nWatch: ' + exercise['watch']
+                return_str += '\r\n  Reps: ' + str(exercise['reps'])
+                return_str += '\r\r\n  Watch: ' + exercise['watch']
             else:
-                return_str += '\r\r\nTime: ' + exercise['time']
-                return_str += '\r\r\nWatch: ' + exercise['watch']
+                return_str += '\r\n  Time: ' + exercise['time']
+                return_str += '\r\n  Watch: ' + exercise['watch']
         return return_str
-
 
     def is_new_user(self, match, group_id):
         """
