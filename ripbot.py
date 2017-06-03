@@ -205,6 +205,10 @@ class GroupMeBot(object):
                             r'^(?:@)?(?:{}\b)?(?: )?markov( \S+)?$'.format(bot_name),
                             text, re.IGNORECASE)
 
+                        random_abs = re.match(
+                            r'^(?:@)?(?:{}\b)?(?: )?(random)(.*)abs(\s*)$'.format(bot_name, text, re.IGNORECASE)
+                        )
+
                         if plus_minus is not None:
                             post = self.is_plusminus(plus_minus, text, group_id, bot_name, name)
 
@@ -253,6 +257,9 @@ class GroupMeBot(object):
 
                         elif markov is not None:
                             post = self.is_markov(markov, text, group_id)
+
+                        elif random_abs is not None:
+                            post = self.get_some_abs(random_abs, text)
 
         if post is not None:
             self.post(group_id, post)
@@ -866,6 +873,53 @@ class GroupMeBot(object):
             log.info('Chain made: {}'.format(post_text))
 
         return post_text
+    
+    def get_some_abs(self, match, text):
+        #Get a day from the last 2 years
+        today = datetime.datetime.today().date()
+        days_back = 365*2
+        candidate_dates = [today - datetime.timedelta(days=x) for x in range(0, days_back)]
+        workout_date = candidate_dates[random.randint(0, numdays -1)]
+        
+        url = 'http://randomabs.com/api/routines/' + str(workout_date)
+        response = requests.get(url)
+        exercises = self.parse_workout(response._content)
+        sets = 'TODO'
+        exercises_text = self.format_exercises(exercises, sets)
+        return exercises_text
+
+    def parse_workout(self, data):
+        raw_workout = json.loads(data)
+        raw_exercises = raw_workout['routine']['exercises']
+
+        filtered_exercises = [self.filter_workout(x) for x in raw_exercises]
+
+    def filter_workout(self, workout):
+        if workout['isReps'] == 1:
+            return {'name': workout['name'], 
+            'reps': workout['reps'],
+            'watch': 'https://www.youtube.com/watch?v=' + workout['youtubeId']
+            }
+        else:
+            return {'name': workout['name'],
+            'time': workout['reps'] + ' seconds',
+            'watch': 'https://www.youtube.com/watch?v=' + workout['youtubeId']
+            }
+
+    def format_exercises(self, exercises, sets):
+        return_str = 'Exercises:'
+        return_str += '\nDo ' + sets + ' of:'
+        for exercise in exercises:
+            return_str += '\r\nExercise:'
+            return_str += '\r\r\n ' + exercise['name']
+            if 'reps' in exercise:
+                return_str += '\r\r\nReps: ' + exercise['reps']
+                return_str += '\r\r\nWatch: ' + exercise['watch']
+            else:
+                return_str += '\r\r\nTime: ' + exercise['time']
+                return_str += '\r\r\nWatch: ' + exercise['watch']
+        return return_str
+
 
     def is_new_user(self, match, group_id):
         """
